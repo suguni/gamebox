@@ -1,0 +1,11 @@
+[package]
+name = "game_box"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+bevy = "0.16.0"
+
+[[bin]]
+name = "2048"
+path = "src/2048/main.rs"
