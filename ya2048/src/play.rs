@@ -1,9 +1,24 @@
-use crate::ui::GameUiPlugin;
-use bevy::DefaultPlugins;
-use bevy::color::palettes::tailwind::SLATE_950;
 use bevy::prelude::*;
+use std::collections::VecDeque;
+use bevy::ui::shader_flags::BORDER;
 
-mod ui;
+struct GamePlayPlugin;
+
+impl Plugin for GamePlayPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(
+            Update,
+            (handle_input, handle_movement, handle_merge, handle_spawn).chain(),
+        );
+    }
+}
+
+fn handle_input() {}
+fn handle_movement() {}
+fn handle_merge() {}
+fn handle_spawn() {}
+
+
 
 #[derive(Default, Resource)]
 struct Game {
@@ -19,35 +34,34 @@ enum RunState {
     GameOver,
 }
 
-fn main() {
-    App::new()
-        .insert_resource(ClearColor(Srgba::hex("#1f2638").unwrap().into()))
-        .insert_resource(Board::new(4))
-        .add_plugins((
-            DefaultPlugins.set(WindowPlugin {
-                primary_window: Some(Window {
-                    title: "2048".into(),
-                    ..default()
-                }),
-                ..default()
-            }),
-            GameUiPlugin,
-        ))
-        .init_resource::<Game>()
-        .run();
-}
-
-#[derive(Resource)]
-struct Board {
-    size: u32,
-}
-
-
-impl Board {
-    pub fn new(size: u32) -> Self {
-        Self { size }
-    }
-}
+// fn build() {
+//     App::new()
+//         .insert_resource(ClearColor(Srgba::hex("#1f2638").unwrap().into()))
+//         .insert_resource(Board::new(4))
+//         .add_plugins((
+//             DefaultPlugins.set(WindowPlugin {
+//                 primary_window: Some(Window {
+//                     title: "yet another 2048".into(),
+//                     ..default()
+//                 }),
+//                 ..default()
+//             }),
+//             GameUiPlugin,
+//         ))
+//         .init_resource::<Game>()
+//         .run();
+// }
+// #[derive(Resource)]
+// struct Board {
+//     size: u32,
+// }
+//
+//
+// impl Board {
+//     pub fn new(size: u32) -> Self {
+//         Self { size }
+//     }
+// }
 
 //
 // #[derive(Component)]

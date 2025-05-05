@@ -1,11 +1,8 @@
-[package]
-name = "game_box"
-version = "0.1.0"
-edition = "2024"
+[workspace]
+members = ["ya2048"]
+resolver = "3"
 
-[dependencies]
-bevy = "0.16.0"
+[workspace.dependencies]
+#bevy = "0.16.0"
+rand = "0.9.1"
 
-[[bin]]
-name = "2048"
-path = "src/2048/main.rs"
