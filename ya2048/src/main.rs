@@ -1,20 +1,41 @@
 use crate::game::{Board, Direction};
 use rand::prelude::*;
+use std::io;
+use std::io::{stdin, Write};
+use termion::event::Key;
+use termion::input::TermRead;
+use termion::raw::IntoRawMode;
 
 mod game;
 
-fn main() {
+fn main() -> Result<(), std::io::Error> {
     let mut board = Board::new();
-    board.print();
 
-    let mut rng = rand::rng();
-    let dirs = [Direction::Up, Direction::Down, Direction::Left, Direction::Right];
+    let mut stdout = io::stdout().into_raw_mode()?;
+    write!(stdout, "{}{}", termion::clear::All, termion::cursor::Goto(1, 1))?;
 
-    while !board.is_end() {
-        let dir = dirs.choose(&mut rng).unwrap();
-        board.slide(dir);
+    board.print(&mut stdout)?;
 
-        println!("{:?}", dir);
-        board.print();
+    let stdin = stdin();
+    for c in stdin.events() {
+        let dir = match c? {
+            termion::event::Event::Key(Key::Up) => Some(&Direction::Up),
+            termion::event::Event::Key(Key::Down) => Some(&Direction::Down),
+            termion::event::Event::Key(Key::Left) => Some(&Direction::Left),
+            termion::event::Event::Key(Key::Right) => Some(&Direction::Right),
+            termion::event::Event::Key(Key::Char('q')) => None,
+            _ => None,
+        };
+
+        if let Some(dir) = dir {
+            board.slide(dir);
+            println!("{:?}\r", dir);
+            board.print(&mut stdout)?;
+            stdout.flush()?;
+        } else {
+            break;
+        }
     }
+
+    Ok(())
 }

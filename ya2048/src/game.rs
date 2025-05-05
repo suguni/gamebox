@@ -1,4 +1,6 @@
+use std::io::{Stdout, Write};
 use rand::prelude::*;
+use termion::raw::RawTerminal;
 
 pub struct Board {
     nums: [u32; BOARD_SIZE * BOARD_SIZE],
@@ -27,7 +29,7 @@ impl Board {
         Self { nums }
     }
 
-    pub fn print(&self) {
+    pub fn print(&self, stdout: &mut RawTerminal<Stdout>) -> Result<(), std::io::Error> {
         for r in 0..BOARD_SIZE {
             for c in 0..BOARD_SIZE {
                 let value = self.nums[r * BOARD_SIZE + c];
@@ -39,8 +41,10 @@ impl Board {
 
             }
             print!("|");
-            println!();
+            println!("\r");
         }
+        stdout.flush()?;
+        Ok(())
     }
 
     pub fn is_end(&self) -> bool {
@@ -65,6 +69,7 @@ impl Board {
             self.transpose();
         }
 
+        // TODO 변경이 없으면 새로 spawn 하면 안됨
         self.spawn_new_number()
     }
 
