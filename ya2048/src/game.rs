@@ -8,8 +8,8 @@ pub struct Board {
     nums: [u32; BOARD_SIZE * BOARD_SIZE],
 }
 
-#[derive(Debug, PartialEq, Eq)]
-pub enum Direction {
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+pub enum SlideDir {
     Up,
     Down,
     Left,
@@ -72,29 +72,29 @@ impl Board {
         true
     }
 
-    pub fn slide(&mut self, dir: &Direction) -> bool {
-        if *dir == Direction::Up || *dir == Direction::Down {
+    pub fn slide(&mut self, dir: SlideDir) -> bool {
+        if dir == SlideDir::Up || dir == SlideDir::Down {
             self.transpose();
         }
 
-        let merge_dir = match *dir {
-            Direction::Left | Direction::Up => MergeDir::Start,
-            Direction::Right | Direction::Down => MergeDir::End,
+        let merge_dir = match dir {
+            SlideDir::Left | SlideDir::Up => MergeDir::Start,
+            SlideDir::Right | SlideDir::Down => MergeDir::End,
         };
 
         let mut merged = false;
         for stack in self.nums.chunks_mut(BOARD_SIZE) {
-            if can_merge(stack, merge_dir) {
-                merge(stack, merge_dir);
+            if can_slide(stack, merge_dir) {
+                slide(stack, merge_dir);
                 merged = true;
             }
         }
 
-        if *dir == Direction::Up || *dir == Direction::Down {
+        if dir == SlideDir::Up || dir == SlideDir::Down {
             self.transpose();
         }
 
-        merged || self.spawn_new_number()
+        merged && self.spawn_new_number()
     }
 
     fn spawn_new_number(&mut self) -> bool {
@@ -135,7 +135,7 @@ enum MergeDir {
     End,
 }
 
-fn merge(stack: &mut [u32], dir: MergeDir) {
+fn slide(stack: &mut [u32], dir: MergeDir) {
     if stack.len() == 0 {
         return;
     }
@@ -171,7 +171,7 @@ fn merge(stack: &mut [u32], dir: MergeDir) {
     }
 }
 
-fn can_merge(stack: &[u32], dir: MergeDir) -> bool {
+fn can_slide(stack: &[u32], dir: MergeDir) -> bool {
     let index: Box<dyn Fn(usize) -> (usize, usize)> = if dir == MergeDir::Start {
         Box::new(|nth| (nth - 1, nth))
     } else {
@@ -204,65 +204,65 @@ mod tests {
     #[test]
     fn test_merge_empty() {
         let mut stack = vec![];
-        merge(&mut stack, Start);
+        slide(&mut stack, Start);
         assert_eq!(stack, Vec::<u32>::new());
 
         let mut stack = vec![];
-        merge(&mut stack, End);
+        slide(&mut stack, End);
         assert_eq!(stack, Vec::<u32>::new());
     }
 
     #[test]
     fn test_merge_to_start() {
         let mut stack = vec![1, 1, 0, 0];
-        merge(&mut stack, Start);
+        slide(&mut stack, Start);
         assert_eq!(stack, vec![2, 0, 0, 0]);
 
         let mut stack = vec![1, 1, 1, 0];
-        merge(&mut stack, Start);
+        slide(&mut stack, Start);
         assert_eq!(stack, vec![2, 1, 0, 0]);
 
         let mut stack = vec![1, 1, 1, 1];
-        merge(&mut stack, Start);
+        slide(&mut stack, Start);
         assert_eq!(stack, vec![2, 2, 0, 0]);
 
         let mut stack = vec![1, 2, 1, 2];
-        merge(&mut stack, Start);
+        slide(&mut stack, Start);
         assert_eq!(stack, vec![1, 2, 1, 2]);
 
         let mut stack = vec![1, 2, 2, 2];
-        merge(&mut stack, Start);
+        slide(&mut stack, Start);
         assert_eq!(stack, vec![1, 4, 2, 0]);
 
         let mut stack = vec![2, 2, 2, 1];
-        merge(&mut stack, Start);
+        slide(&mut stack, Start);
         assert_eq!(stack, vec![4, 2, 1, 0]);
 
         let mut stack = vec![2, 0, 2, 0, 2, 0, 1];
-        merge(&mut stack, Start);
+        slide(&mut stack, Start);
         assert_eq!(stack, vec![4, 2, 1, 0, 0, 0, 0]);
     }
 
     #[test]
     fn test_merge_to_end() {
         let mut stack = vec![0, 0, 1, 1];
-        merge(&mut stack, End);
+        slide(&mut stack, End);
         assert_eq!(stack, vec![0, 0, 0, 2]);
 
         let mut stack = vec![0, 1, 1, 1];
-        merge(&mut stack, End);
+        slide(&mut stack, End);
         assert_eq!(stack, vec![0, 0, 1, 2]);
 
         let mut stack = vec![1, 1, 1, 1];
-        merge(&mut stack, End);
+        slide(&mut stack, End);
         assert_eq!(stack, vec![0, 0, 2, 2]);
 
         let mut stack = vec![1, 2, 1, 2];
-        merge(&mut stack, End);
+        slide(&mut stack, End);
         assert_eq!(stack, vec![1, 2, 1, 2]);
 
         let mut stack = vec![1, 2, 2, 2];
-        merge(&mut stack, End);
+        slide(&mut stack, End);
         assert_eq!(stack, vec![0, 1, 2, 4]);
     }
 
@@ -283,31 +283,36 @@ mod tests {
 
     #[test]
     fn test_can_merge() {
-        assert_eq!(can_merge(&[], Start), false);
-        assert_eq!(can_merge(&[], End), false);
+        assert_eq!(can_slide(&[], Start), false);
+        assert_eq!(can_slide(&[], End), false);
 
-        assert_eq!(can_merge(&[1], Start), false);
-        assert_eq!(can_merge(&[1], End), false);
+        assert_eq!(can_slide(&[1], Start), false);
+        assert_eq!(can_slide(&[1], End), false);
 
-        assert_eq!(can_merge(&[0], Start), false);
-        assert_eq!(can_merge(&[0], End), false);
+        assert_eq!(can_slide(&[0], Start), false);
+        assert_eq!(can_slide(&[0], End), false);
 
-        assert_eq!(can_merge(&[1, 1], Start), true);
-        assert_eq!(can_merge(&[1, 1], End), true);
+        assert_eq!(can_slide(&[1, 1], Start), true);
+        assert_eq!(can_slide(&[1, 1], End), true);
 
-        assert_eq!(can_merge(&[1, 2], Start), false);
-        assert_eq!(can_merge(&[1, 2], End), false);
+        assert_eq!(can_slide(&[1, 2], Start), false);
+        assert_eq!(can_slide(&[1, 2], End), false);
 
-        assert_eq!(can_merge(&[1, 2, 0, 0], Start), false);
-        assert_eq!(can_merge(&[1, 2, 0, 0], End), true);
+        assert_eq!(can_slide(&[1, 2, 0, 0], Start), false);
+        assert_eq!(can_slide(&[1, 2, 0, 0], End), true);
 
-        assert_eq!(can_merge(&[0, 0, 1, 2], Start), true);
-        assert_eq!(can_merge(&[0, 0, 1, 2], End), false);
+        assert_eq!(can_slide(&[0, 0, 1, 2], Start), true);
+        assert_eq!(can_slide(&[0, 0, 1, 2], End), false);
 
-        assert_eq!(can_merge(&[0, 1, 2, 1], Start), true);
-        assert_eq!(can_merge(&[0, 1, 2, 1], End), false);
+        assert_eq!(can_slide(&[0, 1, 2, 1], Start), true);
+        assert_eq!(can_slide(&[0, 1, 2, 1], End), false);
 
-        assert_eq!(can_merge(&[1, 0, 0, 1], Start), true);
-        assert_eq!(can_merge(&[1, 0, 0, 1], End), true);
+        assert_eq!(can_slide(&[1, 0, 0, 1], Start), true);
+        assert_eq!(can_slide(&[1, 0, 0, 1], End), true);
+
+        assert_eq!(can_slide(&[0, 0, 0, 2], End), false);
+        assert_eq!(can_slide(&[0, 0, 2, 0], End), true);
+        assert_eq!(can_slide(&[0, 0, 0, 0], End), false);
+        assert_eq!(can_slide(&[0, 0, 0, 0], End), false);
     }
 }

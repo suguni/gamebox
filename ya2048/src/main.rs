@@ -1,4 +1,4 @@
-use crate::game::{Board, Direction};
+use crate::game::{Board, SlideDir};
 use rand::prelude::*;
 use std::io;
 use std::io::{stdin, Write};
@@ -19,19 +19,22 @@ fn main() -> Result<(), std::io::Error> {
     let stdin = stdin();
     for c in stdin.events() {
         let dir = match c? {
-            termion::event::Event::Key(Key::Up) => Some(&Direction::Up),
-            termion::event::Event::Key(Key::Down) => Some(&Direction::Down),
-            termion::event::Event::Key(Key::Left) => Some(&Direction::Left),
-            termion::event::Event::Key(Key::Right) => Some(&Direction::Right),
+            termion::event::Event::Key(Key::Up) => Some(SlideDir::Up),
+            termion::event::Event::Key(Key::Down) => Some(SlideDir::Down),
+            termion::event::Event::Key(Key::Left) => Some(SlideDir::Left),
+            termion::event::Event::Key(Key::Right) => Some(SlideDir::Right),
             termion::event::Event::Key(Key::Char('q')) => None,
             _ => None,
         };
 
         if let Some(dir) = dir {
-            board.slide(dir);
-            println!("{:?}\r", dir);
-            board.print(&mut stdout)?;
-            stdout.flush()?;
+            if board.slide(dir) {
+                println!("{:?}\r", dir);
+                board.print(&mut stdout)?;
+                stdout.flush()?;
+            } else {
+                println!("{:?} Block!\r", dir);
+            }
         } else {
             break;
         }
