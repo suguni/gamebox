@@ -1,6 +1,8 @@
-use std::io::{Stdout, Write};
 use rand::prelude::*;
+use std::io::{Stdout, Write};
 use termion::raw::RawTerminal;
+
+const BOARD_SIZE: usize = 4;
 
 pub struct Board {
     nums: [u32; BOARD_SIZE * BOARD_SIZE],
@@ -14,9 +16,11 @@ pub enum Direction {
     Right,
 }
 
-const BOARD_SIZE: usize = 4;
-
 impl Board {
+    pub fn new_with_nums(nums: [u32; BOARD_SIZE * BOARD_SIZE]) -> Self {
+        Self { nums }
+    }
+
     pub fn new() -> Self {
         let mut rng = rand::rng();
         let mut indices: Vec<usize> = (0..(BOARD_SIZE * BOARD_SIZE)).collect();
@@ -38,7 +42,6 @@ impl Board {
                 } else {
                     print!("|{:^5}", value);
                 }
-
             }
             print!("|");
             println!("\r");
@@ -48,7 +51,25 @@ impl Board {
     }
 
     pub fn is_end(&self) -> bool {
-        !self.nums.iter().any(|&x| x == 0)
+        if self.nums.iter().any(|&x| x == 0) {
+            return false;
+        }
+
+        for a in 0..BOARD_SIZE {
+            for b in 0..BOARD_SIZE - 1 {
+                // row, a = row, b = column
+                if self.nums[a * BOARD_SIZE + b] == self.nums[a * BOARD_SIZE + b + 1] {
+                    return false;
+                }
+
+                // column, a = column, b = row
+                if self.nums[b * BOARD_SIZE + a] == self.nums[(b + 1) * BOARD_SIZE + a] {
+                    return false;
+                }
+            }
+        }
+
+        true
     }
 
     pub fn slide(&mut self, dir: &Direction) -> bool {
@@ -61,16 +82,19 @@ impl Board {
             Direction::Right | Direction::Down => MergeDir::End,
         };
 
+        let mut merged = false;
         for stack in self.nums.chunks_mut(BOARD_SIZE) {
-            merge(stack, merge_dir);
+            if can_merge(stack, merge_dir) {
+                merge(stack, merge_dir);
+                merged = true;
+            }
         }
 
         if *dir == Direction::Up || *dir == Direction::Down {
             self.transpose();
         }
 
-        // TODO 변경이 없으면 새로 spawn 하면 안됨
-        self.spawn_new_number()
+        merged || self.spawn_new_number()
     }
 
     fn spawn_new_number(&mut self) -> bool {
@@ -147,6 +171,36 @@ fn merge(stack: &mut [u32], dir: MergeDir) {
     }
 }
 
+fn can_merge(stack: &[u32], dir: MergeDir) -> bool {
+    if dir == MergeDir::Start {
+        for i in 1..stack.len() {
+            if stack[i - 1] == 0 {
+                for j in i..stack.len() {
+                    if stack[j] != 0 {
+                        return true;
+                    }
+                }
+            } else if stack[i - 1] == stack[i] {
+                return true;
+            }
+        }
+    } else {
+        for i in 1..stack.len() {
+            if stack[stack.len() - i] == 0 {
+                for j in i..stack.len() {
+                    if stack[stack.len() - j - 1] != 0 {
+                        return true;
+                    }
+                }
+            } else if stack[stack.len() - i - 1] == stack[stack.len() - i] {
+                return true;
+            }
+        }
+    }
+
+    false
+}
+
 #[cfg(test)]
 mod tests {
     use super::MergeDir::*;
@@ -215,5 +269,50 @@ mod tests {
         let mut stack = vec![1, 2, 2, 2];
         merge(&mut stack, End);
         assert_eq!(stack, vec![0, 1, 2, 4]);
+    }
+
+    #[test]
+    fn test_is_end() {
+        let board = Board::new_with_nums([0_u32; BOARD_SIZE * BOARD_SIZE]);
+        assert_eq!(board.is_end(), false);
+
+        let board = Board::new_with_nums([2_u32; BOARD_SIZE * BOARD_SIZE]);
+        assert_eq!(board.is_end(), false);
+
+        let board = Board::new_with_nums([1, 2, 3, 4, 4, 5, 6, 7, 7, 8, 9, 10, 10, 11, 12, 13]);
+        assert_eq!(board.is_end(), true);
+
+        let board = Board::new_with_nums([1, 2, 1, 2, 2, 1, 2, 1, 2, 8, 9, 10, 10, 11, 12, 13]);
+        assert_eq!(board.is_end(), false);
+    }
+
+    #[test]
+    fn test_can_merge() {
+        assert_eq!(can_merge(&[], Start), false);
+        assert_eq!(can_merge(&[], End), false);
+
+        assert_eq!(can_merge(&[1], Start), false);
+        assert_eq!(can_merge(&[1], End), false);
+
+        assert_eq!(can_merge(&[0], Start), false);
+        assert_eq!(can_merge(&[0], End), false);
+
+        assert_eq!(can_merge(&[1, 1], Start), true);
+        assert_eq!(can_merge(&[1, 1], End), true);
+
+        assert_eq!(can_merge(&[1, 2], Start), false);
+        assert_eq!(can_merge(&[1, 2], End), false);
+
+        assert_eq!(can_merge(&[1, 2, 0, 0], Start), false);
+        assert_eq!(can_merge(&[1, 2, 0, 0], End), true);
+
+        assert_eq!(can_merge(&[0, 0, 1, 2], Start), true);
+        assert_eq!(can_merge(&[0, 0, 1, 2], End), false);
+
+        assert_eq!(can_merge(&[0, 1, 2, 1], Start), true);
+        assert_eq!(can_merge(&[0, 1, 2, 1], End), false);
+
+        assert_eq!(can_merge(&[1, 0, 0, 1], Start), true);
+        assert_eq!(can_merge(&[1, 0, 0, 1], End), true);
     }
 }

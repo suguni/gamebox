@@ -35,6 +35,11 @@ fn main() -> Result<(), std::io::Error> {
         } else {
             break;
         }
+
+        if board.is_end() {
+            println!("Game Over!");
+            break;
+        }
     }
 
     Ok(())
