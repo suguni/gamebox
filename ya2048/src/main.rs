@@ -1,5 +1,4 @@
 use crate::game::{Board, SlideDir};
-use rand::prelude::*;
 use std::io;
 use std::io::{stdin, Write};
 use termion::event::Key;

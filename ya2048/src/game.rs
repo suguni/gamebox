@@ -17,6 +17,7 @@ pub enum SlideDir {
 }
 
 impl Board {
+    #[cfg(test)]
     pub fn new_with_nums(nums: [u32; BOARD_SIZE * BOARD_SIZE]) -> Self {
         Self { nums }
     }

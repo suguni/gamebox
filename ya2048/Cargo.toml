@@ -7,6 +7,3 @@ edition = "2024"
 #bevy.workspace = true
 rand.workspace = true
 termion = "4.0.5"
-
-[profile.test.package."*"]
-opt-level = 3
