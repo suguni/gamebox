@@ -172,29 +172,24 @@ fn merge(stack: &mut [u32], dir: MergeDir) {
 }
 
 fn can_merge(stack: &[u32], dir: MergeDir) -> bool {
-    if dir == MergeDir::Start {
-        for i in 1..stack.len() {
-            if stack[i - 1] == 0 {
-                for j in i..stack.len() {
-                    if stack[j] != 0 {
-                        return true;
-                    }
-                }
-            } else if stack[i - 1] == stack[i] {
-                return true;
-            }
-        }
+    let index: Box<dyn Fn(usize) -> (usize, usize)> = if dir == MergeDir::Start {
+        Box::new(|nth| (nth - 1, nth))
     } else {
-        for i in 1..stack.len() {
-            if stack[stack.len() - i] == 0 {
-                for j in i..stack.len() {
-                    if stack[stack.len() - j - 1] != 0 {
-                        return true;
-                    }
+        Box::new(|nth| (stack.len() - nth, stack.len() - nth - 1))
+    };
+
+    for i in 1..stack.len() {
+        let (before, current) = index(i);
+
+        if stack[before] == 0 {
+            for j in i..stack.len() {
+                let (_, current) = index(j);
+                if stack[current] != 0 {
+                    return true;
                 }
-            } else if stack[stack.len() - i - 1] == stack[stack.len() - i] {
-                return true;
             }
+        } else if stack[before] == stack[current] {
+            return true;
         }
     }
 
