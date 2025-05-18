@@ -5093,7 +5093,6 @@ checksum = "a62ce76d9b56901b19a74f19431b0d8b3bc7ca4ad685a746dfd78ca8f4fc6bda"
 name = "ya2048"
 version = "0.1.0"
 dependencies = [
- "bevy",
  "rand 0.9.1",
  "termion",
 ]

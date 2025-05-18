@@ -6,6 +6,6 @@ resolver = "3"
 opt-level = 3
 
 [workspace.dependencies]
-#bevy = "0.16.0"
+bevy = "0.16.0"
 rand = "0.9.1"
 
