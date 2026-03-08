@@ -2577,6 +2577,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "life_game"
+version = "0.1.0"
+dependencies = [
+ "bevy",
+]
+
+[[package]]
 name = "linux-raw-sys"
 version = "0.4.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
