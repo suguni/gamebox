@@ -1,16 +1,24 @@
+use rand::Rng;
+
 pub struct Grid {
-    width: u32,
-    height: u32,
-    cells: Vec<bool>,
+    pub cols: u32,
+    pub rows: u32,
+    pub cells: Vec<bool>,
 }
 
 impl Grid {
-    pub fn new(width: u32, height: u32) -> Self {
+    pub fn new(cols: u32, rows: u32) -> Self {
         Self {
-            width,
-            height,
-            cells: vec![false; (width * height) as usize],
+            cols,
+            rows,
+            cells: vec![false; (cols * rows) as usize],
         }
+    }
+
+    pub fn random(cols: u32, rows: u32) -> Self {
+        let mut rng = rand::rng();
+        let cells = (0..cols * rows).map(|_| rng.random::<bool>()).collect();
+        Self { cols, rows, cells }
     }
 
     fn from_str(grid: &str) -> Self {
@@ -20,26 +28,22 @@ impl Grid {
             .filter(|line| !line.is_empty())
             .flat_map(|line| line.chars().map(|c| c != '.').collect::<Vec<bool>>())
             .collect::<Vec<bool>>();
-        let height = grid.lines().count() as u32;
-        let width = cells.len() as u32 / height;
-        Self {
-            width,
-            height,
-            cells,
-        }
+        let rows = grid.lines().count() as u32;
+        let cols = cells.len() as u32 / rows;
+        Self { cols, rows, cells }
     }
 
     fn live_neighbor_count(&self, x: u32, y: u32) -> u32 {
         let left = i32::max(0, x as i32 - 1) as u32;
-        let right = u32::min(self.width - 1, x + 1);
+        let right = u32::min(self.cols - 1, x + 1);
         let top = i32::max(0, y as i32 - 1) as u32;
-        let bottom = u32::min(self.height - 1, y + 1);
+        let bottom = u32::min(self.rows - 1, y + 1);
 
         let mut count = 0;
 
         for row in top..=bottom {
             for col in left..=right {
-                if !(row == y && col == x) && self.cells[(row * self.width + col) as usize] {
+                if !(row == y && col == x) && self.cells[(row * self.cols + col) as usize] {
                     count += 1;
                 }
             }
@@ -47,12 +51,12 @@ impl Grid {
         count
     }
 
-    fn next_generation(&self) -> Grid {
+    pub fn next_generation(&self) -> Grid {
         let mut next_cells = self.cells.clone();
 
-        for row in 0..self.height {
-            for col in 0..self.width {
-                let p = (row * self.width + col) as usize;
+        for row in 0..self.rows {
+            for col in 0..self.cols {
+                let p = (row * self.cols + col) as usize;
                 let neighbor_count = self.live_neighbor_count(col, row);
                 if self.cells[p] && (neighbor_count == 2 || neighbor_count == 3) {
                     next_cells[p] = true;
@@ -64,8 +68,8 @@ impl Grid {
             }
         }
         Grid {
-            width: self.width,
-            height: self.height,
+            cols: self.cols,
+            rows: self.rows,
             cells: next_cells,
         }
     }
@@ -79,8 +83,8 @@ mod tests {
     #[test]
     fn test_grid_creation() {
         let grid = Grid::new(3, 3);
-        assert_eq!(grid.width, 3);
-        assert_eq!(grid.height, 3);
+        assert_eq!(grid.cols, 3);
+        assert_eq!(grid.rows, 3);
         assert_eq!(grid.cells, vec![false; 9]);
     }
 
@@ -92,8 +96,8 @@ mod tests {
              ...",
         );
 
-        assert_eq!(grid.width, 3);
-        assert_eq!(grid.height, 3);
+        assert_eq!(grid.cols, 3);
+        assert_eq!(grid.rows, 3);
         assert_eq!(
             grid.cells,
             vec![false, false, false, false, true, false, false, false, false]
@@ -216,6 +220,6 @@ mod tests {
     }
 
     fn assert_dead_all(grid: &Grid) {
-        assert_eq!(grid.cells, vec![false; (grid.width * grid.height) as usize]);
+        assert_eq!(grid.cells, vec![false; (grid.cols * grid.rows) as usize]);
     }
 }
