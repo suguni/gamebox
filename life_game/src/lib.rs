@@ -1,4 +1,4 @@
-use rand::Rng;
+use rand::RngExt;
 
 pub struct Grid {
     pub cols: u32,
@@ -18,18 +18,6 @@ impl Grid {
     pub fn random(cols: u32, rows: u32) -> Self {
         let mut rng = rand::rng();
         let cells = (0..cols * rows).map(|_| rng.random::<bool>()).collect();
-        Self { cols, rows, cells }
-    }
-
-    fn from_str(grid: &str) -> Self {
-        let cells = grid
-            .trim()
-            .lines()
-            .filter(|line| !line.is_empty())
-            .flat_map(|line| line.chars().map(|c| c != '.').collect::<Vec<bool>>())
-            .collect::<Vec<bool>>();
-        let rows = grid.lines().count() as u32;
-        let cols = cells.len() as u32 / rows;
         Self { cols, rows, cells }
     }
 
@@ -80,6 +68,18 @@ mod tests {
 
     use super::*;
 
+    fn from_str(grid: &str) -> Grid {
+        let cells = grid
+            .trim()
+            .lines()
+            .filter(|line| !line.is_empty())
+            .flat_map(|line| line.chars().map(|c| c != '.').collect::<Vec<bool>>())
+            .collect::<Vec<bool>>();
+        let rows = grid.lines().count() as u32;
+        let cols = cells.len() as u32 / rows;
+        Grid { cols, rows, cells }
+    }
+
     #[test]
     fn test_grid_creation() {
         let grid = Grid::new(3, 3);
@@ -90,7 +90,7 @@ mod tests {
 
     #[test]
     fn test_from_str() {
-        let grid = Grid::from_str(
+        let grid = from_str(
             "...\n\
              .#.\n\
              ...",
@@ -132,13 +132,13 @@ mod tests {
         let grid = grid.next_generation();
         assert_dead_all(&grid);
 
-        let grid = Grid::from_str(
+        let grid = from_str(
             "...\n\
              .#.\n\
              ...",
         );
 
-        let gen1 = Grid::from_str(
+        let gen1 = from_str(
             "...\n\
              ...\n\
              ...",
@@ -146,12 +146,12 @@ mod tests {
 
         assert_eq!(grid.next_generation().cells, gen1.cells);
 
-        let gen0 = Grid::from_str(
+        let gen0 = from_str(
             ".....\n\
              .###.\n\
              .....",
         );
-        let gen1 = Grid::from_str(
+        let gen1 = from_str(
             "..#..\n\
              ..#..\n\
              ..#..",
@@ -162,7 +162,7 @@ mod tests {
 
     #[test]
     fn block_pattern() {
-        let grid = Grid::from_str(
+        let grid = from_str(
             "....\n\
              .##.\n\
              .##.\n\
@@ -173,7 +173,7 @@ mod tests {
 
     #[test]
     fn glider_pattern() {
-        let g1 = Grid::from_str(
+        let g1 = from_str(
             ".....\n\
              ..#..\n\
              #.#..\n\
@@ -181,7 +181,7 @@ mod tests {
              .....",
         );
 
-        let g2 = Grid::from_str(
+        let g2 = from_str(
             ".....\n\
              .#...\n\
              ..##.\n\
@@ -189,7 +189,7 @@ mod tests {
              .....",
         );
 
-        let g3 = Grid::from_str(
+        let g3 = from_str(
             ".....\n\
              ..#..\n\
              ...#.\n\
@@ -197,7 +197,7 @@ mod tests {
              .....",
         );
 
-        let g4 = Grid::from_str(
+        let g4 = from_str(
             ".....\n\
              .....\n\
              .#.#.\n\
@@ -205,7 +205,7 @@ mod tests {
              ..#..",
         );
 
-        let g5 = Grid::from_str(
+        let g5 = from_str(
             ".....\n\
              .....\n\
              ...#.\n\
