@@ -5,7 +5,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .init_resource::<Score>()
-        .add_event::<Scored>()
+        .add_message::<Scored>()
         .add_systems(
             Startup,
             (
@@ -81,7 +81,7 @@ enum Scorer {
     Ai,
 }
 
-#[derive(Event)]
+#[derive(Message)]
 struct Scored(Scorer);
 
 const GUTTER_HEIGHT: f32 = 20.;
@@ -283,7 +283,7 @@ fn move_paddle(
 fn detect_scoring(
     ball: Query<&Position, With<Ball>>,
     window: Query<&Window>,
-    mut events: EventWriter<Scored>,
+    mut events: MessageWriter<Scored>,
 ) {
     if let Ok(window) = window.single() {
         let window_width = window.resolution.width();
@@ -300,7 +300,7 @@ fn detect_scoring(
 
 fn reset_ball(
     mut ball: Query<(&mut Position, &mut Velocity), With<Ball>>,
-    mut events: EventReader<Scored>,
+    mut events: MessageReader<Scored>,
 ) {
     for event in events.read() {
         if let Ok((mut position, mut velocity)) = ball.single_mut() {
@@ -312,7 +312,7 @@ fn reset_ball(
         }
     }
 }
-fn update_score(mut score: ResMut<Score>, mut events: EventReader<Scored>) {
+fn update_score(mut score: ResMut<Score>, mut events: MessageReader<Scored>) {
     for event in events.read() {
         match event.0 {
             Scorer::Player => score.player += 1,
@@ -338,7 +338,7 @@ fn spawn_scoreboard(mut commands: Commands) {
             ..default()
         },
         TextColor(Color::WHITE),
-        TextLayout::new_with_justify(JustifyText::Center),
+        TextLayout::new_with_justify(Justify::Center),
         Node {
             position_type: PositionType::Absolute,
             top: Val::Px(5.),
@@ -355,7 +355,7 @@ fn spawn_scoreboard(mut commands: Commands) {
             ..default()
         },
         TextColor(Color::WHITE),
-        TextLayout::new_with_justify(JustifyText::Center),
+        TextLayout::new_with_justify(Justify::Center),
         Node {
             position_type: PositionType::Absolute,
             top: Val::Px(5.),
