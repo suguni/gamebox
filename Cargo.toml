@@ -1,5 +1,5 @@
 [workspace]
-members = ["ya2048", "pong", "life_game"]
+members = ["ya2048", "pong", "life_game", "pf_otari"]
 resolver = "3"
 
 [profile.test.package."*"]
